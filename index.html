@@ -1,4 +1,10 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
 <title>과사람 서바이버</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
@@ -1469,7 +1475,7 @@ $('rsSave').onclick=async()=>{
 
 /* ---------------- 명예의 전당 ---------------- */
 /* 명예의 전당 서버: 구글 앱스 스크립트 웹 앱 주소를 따옴표 안에 붙여 넣기 */
-const SCORE_API = '';
+const SCORE_API = 'https://gwasaram-api.tsjeong917.workers.dev';
 let DB=null, USER=null, CAN_WRITE=null, IS_EDITOR=false, liveRows=null, myKey=null, unsub=null, apiRows=null, apiTimer=0;
 async function apiLoad(){
   if (!SCORE_API) return;
@@ -1918,4 +1924,5 @@ function loop(now){
 requestAnimationFrame(loop);
 </script>
 
-</body></html>
+</body>
+</html>
