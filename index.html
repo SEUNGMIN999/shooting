@@ -18,7 +18,7 @@
 }
 [hidden]{display:none!important}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden}
+html,body{height:100%;overflow:hidden;touch-action:manipulation;-webkit-touch-callout:none;-webkit-text-size-adjust:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);word-break:keep-all;font-size:15px}
 button{font-family:inherit;user-select:none;-webkit-user-select:none;white-space:nowrap;cursor:pointer;border:0;outline:none}
 button:focus{outline:none}
@@ -64,7 +64,9 @@ h1,h2,h3{margin:0;text-wrap:balance}
 /* 선택 화면 */
 .sel-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:18px}
 .sel-head h2{font-size:26px;font-weight:800;margin-top:4px}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:12px}
+@media (min-width:700px){.cards{grid-template-columns:repeat(5,1fr)}}
+@media (max-width:420px){.cards{gap:8px}.card{padding:10px}.card canvas{height:104px}.card .nm{font-size:15px}}
 .card{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:6px;color:var(--fg);transition:border-color .15s,transform .08s;white-space:normal}
 .card:hover{border-color:#B9C6C0}
 .card:active{transform:scale(.98)}
@@ -1451,7 +1453,7 @@ function showResult(){
   $('hud').hidden=true;
   $('rsTitle').textContent=r.title; $('rsTitle').className='title-chip'+(G.clear?' clear':'');
   $('rsMeta').innerHTML=`<span>직위</span><b>${G.av.name}</b><span>근무</span><b>3월 ~ ${G.clear?'2':r.lastMonth}월</b><span>호봉</span><b class="num">${r.level}호봉</b><span>처리 업무</span><b class="num">${r.kills.toLocaleString('ko-KR')}건</b>`;
-  const li=(k,v,minus)=>`<div class="li"><span>${k}</span><span class="v ${minus?'minus':''}">${minus?'-':''}${won(v)}</span></div>`;
+  const li=(k,v,minus)=>`<div class="li"><span>${k}</span><span class="v ${minus&&v?'minus':''}">${minus&&v?'-':''}${won(v)}</span></div>`;
   $('rsPay').innerHTML = li('본봉 ('+r.months+'개월)',r.B)+li('각종 수당',r.A)+li('상여금',r.S)+`<div class="li sum"><span>지급 총액</span><span class="v">${won(r.gross)}</span></div>`;
   $('rsDed').innerHTML = r.ded.map(d=>li(d[0],d[1],true)).join('')+`<div class="li sum"><span>공제 총액</span><span class="v minus">-${won(r.dsum)}</span></div>`;
   $('rsNet').textContent=won(r.net);
