@@ -524,7 +524,7 @@ function drawKid(g,x,y,s,seed,t,moving,happy){
   if (balloon){ g.strokeStyle='#8A949C'; g.lineWidth=0.9; g.beginPath(); g.moveTo(6,2); g.quadraticCurveTo(10,-14,9,-30); g.stroke(); g.beginPath(); g.ellipse(9,-36,6,7.5,0,0,Math.PI*2); shp(g,KID_SHIRT[(seed+3)%6],1.2); g.fillStyle='rgba(255,255,255,.6)'; g.beginPath(); g.ellipse(7,-39,1.6,2.4,0.4,0,Math.PI*2); g.fill(); }
   const by=-Math.abs(w)*1.2;
   g.translate(0,by);
-  for (const [lx,a] of [[2.6,-w*0.5],[-2.6,w*0.5]]){ g.save(); g.translate(lx,6); g.rotate(a); rr(g,-2.1,-1,4.2,8,2); shp(g,'#4A5878',1.2); oval(g,0.6,7.6,2.8,1.8); shp(g,'#F2F4F5',1); g.restore(); }
+  for (const [lx,a] of [[2.6,w],[-2.6,-w]]){ g.save(); g.translate(lx,6-Math.max(0,a)*2.6); rr(g,-2.1,-1,4.2,8,2); shp(g,'#4A5878',1.2); oval(g,0.6,7.6,2.8,1.8); shp(g,'#F2F4F5',1); g.restore(); }
   rr(g,-6.5,-4,13,11,4); shp(g,sh,1.3);
   g.save(); g.translate(-6.4,-2.5); g.rotate(happy?-2.4:0.3+w*0.4); rr(g,-1.8,0,3.6,7,1.8); shp(g,sh,1.2); g.restore();
   g.save(); g.translate(6.4,-2.5); g.rotate(happy?2.4:-0.3-w*0.4); rr(g,-1.8,0,3.6,7,1.8); shp(g,sh,1.2); g.restore();
@@ -700,14 +700,14 @@ function drawTeacher(g, id, x, y, s, phase, faceX, hurt, time){
   g.translate(0,-bob); g.lineJoin='round'; g.lineCap='round';
   if (C.hairBack) C.hairBack(g,time,walk);
   // 다리
-  for (const [sx,a] of [[3.6,-walk*0.55],[-3.6,walk*0.55]]){
-    g.save(); g.translate(sx,8.5); g.rotate(a); rr(g,-2.9,-1,5.8,11.5,2.6); shp(g,C.pants);
+  for (const [sx,ph] of [[3.6,walk],[-3.6,-walk]]){ const lift=Math.max(0,ph)*3.4;
+    g.save(); g.translate(sx,8.5-lift); rr(g,-2.9,-1,5.8,11.5,2.6); shp(g,C.pants);
     oval(g,1,11,3.7,2.3); shp(g,C.shoe,1.3); g.restore(); }
   // 뒤쪽 팔
   const arm = (side, a, item) => { g.save(); g.translate(side*8.6,-4.5); g.rotate(a); rr(g,-2.7,0,5.4,11.5,2.7); shp(g,C.arm); if (C.cover){ rr(g,-3,4.6,6,6.8,2.2); shp(g,C.cover,1.2); }
     g.beginPath(); g.arc(0,12.2,2.7,0,Math.PI*2); shp(g,SKIN,1.3);
     if (item && C.item){ g.save(); g.translate(1,11); g.rotate(-a); C.item(g,time); g.restore(); } g.restore(); };
-  arm(-1, walk*0.6+0.12, false);
+  arm(-1, walk*0.25+0.12, false);
   // 몸통
   g.beginPath(); g.moveTo(-8.5,-8); g.quadraticCurveTo(0,-10,8.5,-8); g.quadraticCurveTo(10.6,1,10,10.5); g.quadraticCurveTo(0,12,-10,10.5); g.quadraticCurveTo(-10.6,1,-8.5,-8); g.closePath();
   shp(g,C.top);
@@ -739,7 +739,7 @@ function drawTeacher(g, id, x, y, s, phase, faceX, hurt, time){
     else { g.beginPath(); g.arc(-4.4,-18.7,3.5,0,Math.PI*2); g.moveTo(8.1,-18.7); g.arc(4.6,-18.7,3.5,0,Math.PI*2); g.stroke(); }
     g.beginPath(); g.moveTo(-1.1,-19); g.lineTo(1.3,-19); g.stroke(); }
   // 앞쪽 팔
-  arm(1, -walk*0.6-0.12, true);
+  arm(1, -walk*0.25-0.12, true);
   g.restore();
 }
 
@@ -1468,23 +1468,36 @@ $('rsSave').onclick=async()=>{
 };
 
 /* ---------------- 명예의 전당 ---------------- */
-let DB=null, USER=null, CAN_WRITE=null, IS_EDITOR=false, liveRows=null, myKey=null, unsub=null;
+/* 명예의 전당 서버: 구글 앱스 스크립트 웹 앱 주소를 따옴표 안에 붙여 넣기 */
+const SCORE_API = '';
+let DB=null, USER=null, CAN_WRITE=null, IS_EDITOR=false, liveRows=null, myKey=null, unsub=null, apiRows=null, apiTimer=0;
+async function apiLoad(){
+  if (!SCORE_API) return;
+  try{ const r=await fetch(SCORE_API+(SCORE_API.includes('?')?'&':'?')+'t='+Date.now()); const j=await r.json(); if (Array.isArray(j)){ apiRows=j; renderBoard(); } }
+  catch(e){ if (!apiRows) renderBoard(); }
+}
 function localRows(){ try{ return JSON.parse(localStorage.getItem('gsr-scores')||'[]'); }catch(e){ return []; } }
 function saveLocal(entry){ try{ const a=localRows(); entry.id='L'+entry.ts; a.push(entry); a.sort((x,y)=>y.net-x.net); localStorage.setItem('gsr-scores',JSON.stringify(a.slice(0,100))); }catch(e){} return entry.id||('L'+entry.ts); }
 async function saveScore(entry){
+  if (SCORE_API){
+    try{ const r=await fetch(SCORE_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(entry)}); const j=await r.json();
+      if (j && j.ok){ myKey=j.id; await apiLoad(); return 'live'; } }catch(e){}
+    myKey=saveLocal(entry); return 'local';
+  }
   if (DB && CAN_WRITE!==false){
     try{ const ref=await DB.collection('scores').add(entry); myKey=ref.id; return 'live'; }
     catch(e){ CAN_WRITE=false; }
   }
   myKey=saveLocal(entry); return 'local';
 }
-function rows(){ return (DB && liveRows) ? liveRows : localRows(); }
-function openBoard(){ G=null; $('hud').hidden=true; renderBoard(); show('scrBoard'); }
+function rows(){ if (SCORE_API && apiRows) return apiRows; return (DB && liveRows) ? liveRows : localRows(); }
+function openBoard(){ G=null; $('hud').hidden=true; renderBoard(); show('scrBoard');
+  if (SCORE_API){ apiLoad(); clearInterval(apiTimer); apiTimer=setInterval(()=>{ if ($('scrBoard').hidden){ clearInterval(apiTimer); return; } apiLoad(); }, 8000); } }
 function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function renderBoard(){
-  const live = !!(DB && liveRows);
+  const live = !!((SCORE_API && apiRows) || (DB && liveRows));
   $('bdSrc').textContent = live ? '실시간' : '이 기기 기록'; $('bdSrc').className = 'src'+(live?'':' local');
-  $('bdAdmin').hidden = !(live && IS_EDITOR);
+  $('bdAdmin').hidden = !(!SCORE_API && live && IS_EDITOR);
   const list=rows().slice().sort((a,b)=>(b.net||0)-(a.net||0)).slice(0,50);
   const box=$('bdList');
   if (!list.length){ box.innerHTML='<div class="empty">등록된 기록 없음</div>'; return; }
@@ -1513,6 +1526,7 @@ $('adReset').onclick=async()=>{
   catch(e){ toast('초기화 실패'); }
 };
 (async function initCaps(){
+  if (SCORE_API){ apiLoad(); return; }
   for (let i=0;i<40 && !(window.claude && window.claude.use);i++) await new Promise(r=>setTimeout(r,250));
   if (!(window.claude && window.claude.use)) return;
   try{ USER = await window.claude.use('user'); }catch(e){}
@@ -1591,9 +1605,9 @@ function scParade(g,t,U,cx,cy){
     rr(g,x+40*U,cy-20*U,80*U,40*U,4*U); g.fillStyle='#D5E6DD'; g.fill(); g.stroke(); }
   g.fillStyle='#E9E2D6'; g.fillRect(0,floorY,W,H-floorY);
   g.strokeStyle='rgba(23,32,29,.07)'; g.lineWidth=1; for (let x=-((t*140*U)%(60*U)); x<W; x+=60*U){ g.beginPath(); g.moveTo(x,floorY); g.lineTo(x-40*U,H); g.stroke(); }
-  const ids=AVATARS.map(a=>a.id), gap=62*U, sc=1.75*U;
+  const ids=AVATARS.map(a=>a.id), gap=80*U, sc=1.7*U;
   const lead=-40*U + (t/3)*(W + ids.length*gap + 60*U);
-  ids.forEach((id,i)=>{ const x=lead-i*gap; if (x<-60*U||x>W+60*U) return; drawTeacher(g,id,x,floorY-21*sc,sc,t*11+i*0.7,1,false,t+i); });
+  ids.forEach((id,i)=>{ const x=lead-i*gap; if (x<-60*U||x>W+60*U) return; drawTeacher(g,id,x,floorY-21*sc,sc,t*9+i*1.3,1,false,t+i); });
   return '오늘도 출근하는 선생님들';
 }
 function scFlood(g,t,U,cx,cy){
